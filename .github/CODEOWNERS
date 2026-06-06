@@ -1,0 +1,6 @@
+# All files — both reviewers required
+* @Pathnex-PR-S @morepravin64-web
+
+# Specifically for ansible/devops yaml files
+*.yml @Pathnex-PR-S @morepravin64-web
+*.yaml @Pathnex-PR-S @morepravin64-web
