@@ -1,0 +1,76 @@
+# Day 03 — Users, SGs, Env Vars
+
+## 🔹 Ansible — Create User
+
+---
+- name: Create Pathnex user
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Create user pathnex-admin
+      user:
+        name:pathnex-admin
+        shell: /bin/bash
+
+
+
+## 🔹 Terraform — Security Group (r6i.4xlarge EC2)
+
+provider "aws" {
+    region = "us-east-1"
+}
+
+resource "aws_security_group" "PathnexSG" {
+    name = "PathnexSG"
+    description = "Pathnex SG for SSH"
+
+    ingress = {
+        from-port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+}
+
+
+resource "aws_instance" "PathnexEC2"{
+    ami             = "ami0abcd1234abcd1234"
+    instance_type   = "r6i.4xlarge"
+    vpc_security_group_ids = ["aws_security_group.PathnexSG.id"]
+
+    tags = {
+        Name = "Pathnex-EC2"
+    }
+}
+
+## 🔹 Kubernetes — Add Environment Variables
+
+apiVersion: v1
+kind: pod
+metadata:
+  name: pathnex-env-prod
+spec: 
+  containers:
+    - name: app
+      image: nginx
+      env: 
+        - name: APP_ENV
+          value: "production"
+
+
+
+## 🔹 Shell Script — Check File Exists
+
+
+#!/bin/bash
+FILE="/tmp/pathnex.txt"
+
+if [ -f "$FILE" ]; then
+  echo "File exists"
+else
+  echo "File does not exists"
+fi
+
+
+

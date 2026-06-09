@@ -129,3 +129,6 @@ maven-package:
   script:
     - cd sample-java-app
     - mvn package
+
+
+
