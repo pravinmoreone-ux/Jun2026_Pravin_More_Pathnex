@@ -1,0 +1,133 @@
+# Day 04 — More Packages, Key Pair, Service
+
+## 🔹 Ansible — Install Multiple Packages
+
+--
+
+
+- name: Install Package for Pathnex by  Pravin More
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install tools by PM
+      yum: 
+        name: 
+          - git
+          - wget
+        state: present
+
+
+==
+==  🔹 Terraform — EC2 with Key Pair (c6i.8xlarge) by Pravin
+
+provider "aws" {
+    region = "us-west-1"
+}
+
+resource "aws_key_pair" "PathnexKeyPair" {
+    key_name = "PathnexKeyPair"
+    public_key = "ssh-rsa 1234PraM"
+}
+
+resource "aws_instance" "PathnexEC2PM" {
+    ami            = "ami-012343PM"
+    instance_type  = "c6i.8xlarge"
+    key_name       = aws_key_pair.PathnexKeyPair.key_name
+
+    tags = {
+        Name = "Pathnex-EC2-PM"
+    }
+}
+
+
+
+=======
+# Kubernetes — Create ClusterIP Service
+
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: pathnex-service
+spec:
+  selector: #Service will forward traffic only to Pods having the label
+    app: pathnex-app
+  ports:
+    - port: 80
+      targetPort: 80
+===
+===========
+
+
+ Parallel Builds
+Jenkins Pipeline — Parallel Build & Test
+You will learn how to **run build and test in parallel**.
+
+
+pipeline {  #start of Jenlkins Declarative Pipeline 
+    agent any #Jenkins can run this pipeline on any available agent/node.
+    stages {  #Contains all stages of the pipeline.
+        stage('Parallel Tasks') { #Creates a parent stage called Parallel Tasks.
+            parallel {  
+                stage('Build') {
+                    steps {
+                        sh 'mvn clean compile' #Deletes previous build artifacts.
+                    } #Compiles Java source code.
+                }
+                stage('Test') {
+                    steps {
+                        sh 'mvn test'  
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+==============================
+
+
+## 🔹 GitLab CI — Parallel Jobs
+You will learn how to **run parallel jobs in GitLab CI**.
+ Gitlab CI - Parallel Jobs
+
+
+# Defines a single stage called build-test.
+stages:
+  - build-test
+
+# This job belongs to the build-test stage.
+maven-build:
+  stage: build-test
+  image: maven:3.8.1-jdk-17
+  script:
+    - git clone https://github.com/Pathnex/sample-java-app.git
+    - cd sample-java-app
+    - mvn clean compile #Runs Maven build commands.
+  parallel: 1
+
+
+maven-test:
+  stage: build-test
+  image: maven:3.8.1-jdk-17
+  script:
+    - cd sample-java-app
+    - mvn test  #Run maven test cmd
+  parallel: 1
+#It tells GitLab to create 1 parallel instance of the job.
+
+===================================
+
+
+
+
+
+
+
+
+
+
+

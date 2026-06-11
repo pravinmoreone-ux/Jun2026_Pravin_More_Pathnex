@@ -1,0 +1,149 @@
+# Day 05 — Handlers, User-Data, Resource Limits
+
+## Ansible — Handler to Restart Nginx
+
+---
+## Name of the play 
+- name: Manage Nginx
+  hosts: all ## run this play on all host
+  become: yes ## Execute tasks with sudo/root privileges.
+
+
+
+  tasks: ## START LIST OF TASK TO EXECUTE
+    - name: Update config file  ## nAME OF TASK
+      copy: ## USE ANSIBLE COPY MODULE
+        ## COPY DATA FROM ANSIBLE CONTROL NODE TO TARGET SERVER
+        src: index.html 
+        dest: /usr/share/nginx/html/index.html
+      notify: Restart Nginx 
+      ##Triggers a handler named Restart Nginx.
+
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+
+
+
+## 🔹 Terraform — EC2 with User Data (c6a.12xlarge)  by Pravin More
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_instance" "PravinEC2Instance" {
+  ami             = "ami0abcd1234abcd1234"
+  instance_type   = "c6a.12xlarge"
+
+## Starts a multi-line script.  
+##Starts a multi-line script.
+## Terraform passes this script to EC2 during first boot
+##When server starts,
+## run these commands automatically.
+  user_data <<EOF
+#!/bin/bash   ##Execute this script using Bash.
+yum install -y httpd
+systemctl start httpd  
+EOF
+
+  tags = {
+    Name = "Pathnex-PM-EC2"
+  }
+}
+
+
+
+===============================================
+
+
+## 🔹 Kubernetes — Resource Limits
+
+apiVersion: v1 ## kubernetes api version
+kind: Pod # create a pod
+metadata: # info about pod
+  name: pathnex-pravin-limit-pod ## name of pod
+spec:  # desiresd state of pod
+  containers:  ## list of container inside pod
+    - name: app
+      image: nginx ## use of nginx image for docker hub
+      resources: ## control cpu and memory allocation
+        limits: 
+          cpu:    "256Mi"
+          memory: "500Mi"
+
+
+
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: Pathnex-Limited-Pod
+spec:
+  - name: app
+    image: nginx
+    resources: 
+      limits: 
+        cpu: "256Mi"
+        memory: "500Mi"
+
+
+===========================================================
+
+
+
+# Day 05 — Environment Variables
+
+## 🔹 Jenkins Pipeline — Use Environment Variables
+You will learn how to **use environment variables in Jenkins pipelines**.
+
+
+pipeline {
+  ## Pipeline can run on any available Jenkins agent/node
+  agent any
+  
+  ## Defines environment variables.
+  ## Variables are available to all stages in the pipeline
+  environment {
+    INSTITUTE_NAME = "Pathnex"
+  }
+  ## Contains all stages.
+  ## Stages execute sequentially.
+  stages {
+      stage('Print'){
+          steps {
+              sh 'echo "Welcome to $INSTITUTE_NAME DevOps Training"'    ## run shell cmd on linux
+          }
+        }
+        stage ('Build') {
+          steps {
+            sh 'mvn clean package -Dinstitute.name=$INSTITUE_NAME'  ## clean previously build artifact
+          }
+        }
+    }
+}
+
+###  
+
+
+## 🔹 GitLab CI — Use Environment Variables
+You will learn how to **use CI variables in GitLab pipelines**.
+
+
+stages:  ## Defines the pipeline stages.
+  - build
+
+variables:  # Creates a global environment variable.
+  INSTITUTE_NAME: "Pathnex"
+
+##GitLab Runner executes this job.
+build:
+  stage: build 
+  image: maven:3.8.1-jdk-17 ## GitLab Runner starts a container:
+  script:
+    - git clone https://github.com/Pathnex/sample-java-app.git
+    - cd sample-java-app
+    - echo "Welcome to $INSTITUTE_NAME DevOps Training"
+    - mvn clean package -Dinstitute.name=$INSTITUTE_NAME
+
+    
