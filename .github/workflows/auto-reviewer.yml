@@ -1,0 +1,22 @@
+name: Auto Add Reviewer
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+jobs:
+  add-reviewer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add Reviewer
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              reviewers: ['Pathnex-PR-S']
+            });

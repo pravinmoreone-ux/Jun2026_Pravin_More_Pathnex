@@ -1,0 +1,256 @@
+# Day 08 — Variables, VPC, Probes, Loops
+
+## 🔹 Ansible — Install Packages Using Variables
+  --- by pravin 
+
+    ## name of play . hosts to run on all server. execute task with sudo privileges.
+  - name: Install Packages Using Variables
+    hosts: all
+    become: yes
+
+
+    ## Define variables 
+    vars:
+      pathnex_packages: ## value in the list
+        - tree
+        - unzip
+        - vim
+
+    ## Contains list of action Ansible will perform    
+    tasks:
+      - name: Install required packages
+        yum: 
+          name: "{{ pathnex_packages }}"  ## use the variable value
+          state: present  ## Ensure package is install . if not install them.
+
+
+          +++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+## Terraform VPC
+
+##Configures Terraform to use AWS.
+provider "aws" {
+    region = "us-east-1"
+}
+
+## Creates a VPC named PathnexVPC.
+## CIDR 10.10.0.0/16 provides 65,536 IP addresses  32 - 16 = 16 (2 raise to power 16)
+resource "aws_vpc" "PathnexVPC" {
+    cidr_block = "10.10.0.0/16"
+
+    tags = {
+        Name = "Pathnex-VPC"
+    }
+}
+
+##Creates a subnet inside the VPC.
+resource "aws_subnet" "PathnexSubnet" {
+    vpc_id         = aws_vpc.PathnexVPC.id 
+    ## Associates the subnet with the VPC created above.
+    cidr_block     = "10.10.0.0/24" ##Creates a subnet with 256 IP addresses.
+    map_public_ip_on_launch = true
+### Any EC2 launched in this subnet automatically gets a public IP.
+    tags = {
+        Name   =  "Pathnex-Subnet"
+    }
+}
+
+    
+==============================================================
+
+## 🔹 Kubernetes — Add Liveness & Readiness Probes
+-- by Pravin More
+
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: pravin-probe-pod
+spec:
+  containers: ## Creates a container named web.
+    - name: web
+      image: nginx  # Uses the nginx image from Docker Hub
+      livenessProbe:  # Checks if the application is still alive.
+        httpGet:
+          path: /
+          port: 80
+        initialDelaySeconds: 5  ## Kubernetes waits 5 seconds after container starts.
+      readinessProbe:  ##  Checks if the application is ready to receive traffic.
+        httpGet:
+          path: /
+          port: 80
+        initialDelaySeconds: 3 ## Kubernetes waits 3 seconds after container starts.
+    
+ 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pravin-probe-pod
+spec:
+  containers: 
+    - name: web
+      image: nginx
+      livenessProbe:
+        httpGet:
+          path: /
+          port: 80
+        initialDelaySeconds: 5
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 80
+        initialDelaySeconds: 3        
+===================================================================
+
+## 🔹 Shell Script — Loop Through List
+
+#!/bin/bash
+
+for item in Pathnex DevOps Training; do
+  echo "Item: $item"
+done
+
+####  Tells the operating system to execute the script using the Bash shell.
+#!/bin/bash
+
+##
+for starts a loop.
+item is the loop variable.
+The list contains three values:
+Pathnex
+DevOps
+Training
+The loop runs once for each value.
+##
+
+for item in Pravin More Devops Training; do
+  echo "Item: $item"
+done
+
+## echo prints text to the terminal.
+## $item contains the current value from the loop.
+
+output: 
+
+Item: Pravin
+Item: More
+Item: Devops
+Item: Training
+
+
+
+#!/bin/bash
+
+for item in Pravin More Pathnex Devops; do
+  echo "Item: $item"
+done  ## Marks the end of the for loop.
+
+
+=====================================================
+
+
+# Conditional Stages  by Pravin  Jenkins
+
+## 🔹 Jenkins Pipeline — Conditional Execution
+You will learn how to **run stages based on branch or parameter conditions**.
+
+#### Starts a Declarative Jenkins Pipeline.
+
+
+pipeline {
+    agent any  ## Run the pipeline on any available Jenkins agent/node
+    parameters {
+        string(name: 'ENVIRONMENT',  ## Creates a parameter named:
+               defaultValue: 'dev', 
+               description: 'Deployment Environment')
+    }
+
+    ### Defines a global environment variable.
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage ('Checkout') { ## Downloads source code from GitHub.
+            steps {
+                git branch: 'main', url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+
+        stage ('Build') {
+            when {
+                branch 'main'  # Build stage runs only if current branch is:main
+            }
+            steps {
+                sh 'mvn clean compile' # Runs Maven compile:
+            }
+        }
+        stage('Deploy') {
+            when {
+                expression { param.ENVIRONMENT == 'dev' } ##Deploy runs only when dev
+            }
+            steps {
+                sh 'echo "Deploying to $ENVIRONMENT by $INSTITUTE_NAME"'   #vDeploying to dev by Pathnex
+            }
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+
+
+
+## 🔹 GitLab CI — Conditional Jobs by pravin
+You will learn how to **run jobs based on variables or branches**.
+
+stages: 
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - git clone https://github.com/Pathnex/sample-java-app.git
+    - cd sample-java-app
+    - mvn clean compile
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying to $CI_ENVIRONMENT_NAME by Pathnex"
+  only:
+    variables:
+      - $CI_ENVIRONMENT_NAME == "dev"
+
+
+=====================info =======================
+
+| Keyword         | Purpose                | Short Description                         |
+| --------------- | ---------------------- | ----------------------------------------- |
+| `stages`        | Define pipeline flow   | Lists stages like build, test, deploy     |
+| `stage`         | Assign job to stage    | Specifies which stage a job belongs to    |
+| `image`         | Docker image           | Container used to run the job             |
+| `script`        | Execute commands       | Commands run during the job               |
+| `before_script` | Pre-job commands       | Runs before `script`                      |
+| `after_script`  | Post-job commands      | Runs after `script`, even on failure      |
+| `variables`     | Store values           | Define environment variables              |
+| `only`          | Run condition          | Run job only on specific branches/tags    |
+| `except`        | Exclude condition      | Skip job on specific branches/tags        |
+| `rules`         | Advanced conditions    | Modern replacement for `only/except`      |
+| `tags`          | Select runner          | Choose specific GitLab Runner             |
+| `artifacts`     | Save files             | Pass build outputs to later stages        |
+| `cache`         | Reuse files            | Speed up builds by caching dependencies   |
+| `dependencies`  | Download artifacts     | Get artifacts from previous jobs          |
+| `needs`         | Parallel execution     | Run jobs without waiting for entire stage |
+| `environment`   | Deployment target      | Define dev, qa, uat, prod environments    |
+| `when`          | Execution timing       | Run manually, always, on success, etc.    |
+| `allow_failure` | Ignore failures        | Pipeline continues even if job fails      |
+| `retry`         | Retry failed job       | Automatically rerun failed jobs           |
+| `timeout`       | Job time limit         | Stop jobs after specified time            |
+| `services`      | Additional containers  | Run DB, Redis, etc., alongside job        |
+| `include`       | Import YAML            | Reuse pipeline templates                  |
+| `trigger`       | Start another pipeline | Trigger child or external pipelines       |
+
