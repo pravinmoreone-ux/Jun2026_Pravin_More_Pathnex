@@ -1,0 +1,201 @@
+
+
+################## Ansible PM #################################
+
+- name: Deployment template for pathnex by PM
+  hosts: all                ## Run this play on all hosts defined in the inventory file.
+  become: yes                ## Execute tasks with sudo/root privileges.  
+
+  tasks:
+    - name     : Copy the template file
+      template : 
+        src: pathnex.config.j2
+        dest: /etc/pathnex.conf
+
+Interview Question
+
+Q: Why use the template module instead of copy?
+
+Answer:
+The copy module transfers a file exactly as it is, 
+whereas the template module processes Jinja2 variables
+ and generates environment-specific configuration files
+  dynamically before copying them to the target server.
+
+
+  ========================== Terraform Internet ===================
+
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_internet_gateway" "PravinIGW" {
+    vpc_id = aws_vpc.PravinVPC.id
+
+    tags = {
+        Name = "Pathnex-IGW"
+    }
+}
+
+resource "aws_route" "internet_access" {
+  route_table_id         = aws_route_table.public_rt.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.PathnexIGW.id
+}
+
+====================================================================
+
+### PM  Kubernetes — Create ConfigMap
+
+### A ConfigMap is a Kubernetes object used to store non-sensitive configuration 
+### data as key-value pairs and make it available to Pods.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pathnexpravin-configmap
+data:
+  APP_MODE: "production"
+  WELCOME_MSG: "Hello Pravin"
+
+### data section stores key-value pairs.
+
+========================================================
+
+
+#### Shell script
+### Tells Linux to execute the script using the Bash shell.
+
+#!/bin/bash
+
+LOAD=$(uptime | awk '{print $10}')
+
+echo "Current CPU Load: $LOAD"
+
+###################3
+
+awk '{print $10}'
+
+Splits the output into fields and prints the 10th field.
+
+For the above output:
+
+1  12:30:15
+2  up
+3  5
+4  days,
+5  2:10,
+6  2
+7  users,
+8  load
+9  average:
+10 0.25,
+11 0.18,
+12 0.15
+
+So:
+
+LOAD=0.25,
+3. Print Load
+echo "Current CPU Load: $LOAD"
+
+Output:
+
+Current CPU Load: 0.25,
+⚠️ Problem with This Script
+
+The field position ($10) can change on different Linux distributions or uptime formats.
+
+A more reliable version is:
+
+#!/bin/bash
+
+LOAD=$(uptime | awk -F'load average: ' '{print $2}' | cut -d',' -f1)
+
+echo "Current CPU Load: $LOAD"
+
+Example Output:
+
+Current CPU Load: 0.25
+Interview Question
+
+What is CPU Load?
+
+CPU Load is the average number of processes that are either:
+
+Running on the CPU, or
+Waiting for CPU time
+
+For a system with 1 CPU core:
+
+Load < 1 → Healthy
+Load = 1 → Fully utilized
+Load > 1 → Processes are waiting
+
+For a system with 4 CPU cores:
+
+Load < 4 → Healthy
+Load > 4 → CPU may be overloaded
+
+Example:
+
+load average: 8.50, 7.20, 6.10
+
+On a 4-core machine, a load of 8.50 means the CPU is under heavy load and processes are waiting for execution.
+
+===================================================
+
+
+
+# Artifacts and Archiving
+
+## 🔹 Jenkins Pipeline — Archive Artifacts
+You will learn how to **save build artifacts for future use**.
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Archive') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
+    }
+}
+
+## 🔹 GitLab CI — Artifacts
+You will learn how to **store artifacts in GitLab CI**.
+
+## A GitLab pipeline runs through stages.
+
+##  Here, there is only one stage:
+
+stages:
+  - build
+
+build;
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script: 
+    - git clone https://github.com/Pathnex/sample-java-app.git
+    - cd sample-java-app
+    - mvn clean package
+  artifacts: ## Artifacts are files preserved after the job completes.
+    paths:
+      - target/*.jar ## save all jar file from target
+    expire_in: 1 week   ## Artifacts Automatically Deleted
+

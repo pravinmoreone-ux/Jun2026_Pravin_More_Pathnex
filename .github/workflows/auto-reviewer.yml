@@ -4,9 +4,17 @@ on:
   pull_request:
     types: [opened, ready_for_review]
 
+# name: Simply the title of the workflow as it will appear in your GitHub Actions tab.
+# on: pull_request: This tells GitHub to run the script based on PR activity.
+# types: [opened, ready_for_review]: The script will only run when a 
+# PR is newly created (opened) or when a draft PR is officially marked as ready_for_review. It won't trigger on every single code push.
+
 jobs:
   add-reviewer:
     runs-on: ubuntu-latest
+
+# runs-on: ubuntu-latest: Defines the virtual environment. GitHub will spin up a fresh, 
+# temporary Linux (Ubuntu) virtual machine to execute the steps below.
 
     steps:
       - name: Add Reviewer
@@ -20,3 +28,14 @@ jobs:
               pull_number: context.payload.pull_request.number,
               reviewers: ['Pathnex-PR-S']
             });
+
+#uses: actions/github-script@v7: Instead of writing complex bash commands, this uses an official GitHub pre-built action that allows you to write JavaScript directly in your workflow to interact with the GitHub API.
+#github-token: Automatically passes GitHub's built-in, temporary security token so the script has permission to modify your repository (specifically, to add reviewers).
+
+# github.rest.pulls.requestReviewers: The specific API function used to request reviewers on a PR.
+
+# context.repo.owner & repo: Automatically grabs the username/organization and repository name where this code is currently running.
+
+# pull_number: Extracts the exact ID number of the pull request that triggered the workflow.
+
+# reviewers: ['Pathnex-PR-S']: This is the core action. It automatically assigns the GitHub user (or team) Pathnex-PR-S as a required reviewer.

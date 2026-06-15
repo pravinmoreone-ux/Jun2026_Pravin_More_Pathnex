@@ -1,0 +1,5 @@
+tasks:
+ 1. today's video 13 jun added comment and like
+ 2. code push for Week 2 Day 8 done
+ 3. Intro video sent
+ 4. look today's video and practice demo/ create in aws eks 
