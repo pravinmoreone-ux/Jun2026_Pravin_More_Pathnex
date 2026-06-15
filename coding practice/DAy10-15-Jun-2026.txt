@@ -1,0 +1,132 @@
+# Day 10 — Conditions, Route Table, Secret, Loops
+
+## 🔹 Ansible — When Condition
+
+- name: Install tool based on OS
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install htop 
+      yum:              ## Uses the yum module, which manages packages on Red Hat–based systems.
+        name: htop      ## The package to install.
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
+
+## Conditional execution. 
+## The task runs only if the target host's OS family is detected as RedHat.
+
+## when: ansible_facts['os_family'] in  ["RedHat", "CentOS" ]
+===========================================================================
+
+## 🔹 Terraform — Route Table + Association
+## This Terraform code creates a Route Table
+## and associates it with a Subnet so that instances in the 
+## subnet can access the internet through an Internet Gateway.
+
+resource "aws_route_table" "PathnexRT" {
+    vpc_id = aws_vpc.PathnexVPC.id
+
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.PathnexIGW.id
+    }
+
+    tags = {
+        Name = "Pathnex-RouteTable"
+    }
+}
+
+resource "aws_route_table_association" "PathnexRTA" {
+  subnet_id      = aws_subnet.PathnexSubnet.id
+  route_table_id = aws_route_table.PathnexRT.id
+}
+
+
+## 🔹 Kubernetes — Secret
+
+## This Kubernetes YAML creates a Secret object 
+## used to store sensitive information 
+## such as passwords, API keys, tokens, and credentials.
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pravin-secret
+type: Opaque
+data: 
+  password: cGF0asfsnfs== 
+
+
+
+## Opaque is the default secret type and stores arbitrary key-value pairs.
+
+| Type                                | Purpose                     |
+| ----------------------------------- | --------------------------- |
+| Opaque                              | Generic secrets             |
+| kubernetes.io/dockerconfigjson      | Docker registry credentials |
+| kubernetes.io/tls                   | TLS certificates            |
+| kubernetes.io/service-account-token | Service Account tokens      |
+
+
+
+
+
+## 🔹 Shell Script — For Loop 1–10
+
+#!/bin/bash
+
+for p in {1..10}; do
+  echo "Pravin Number: $p"
+done
+
+
+
+
+# Caching Dependencies
+
+## 🔹 Jenkins Pipeline — Cache Maven Dependencies
+You will learn how to **reuse dependencies to speed up builds**.
+
+
+pipeline {   ### Defines a Jenkins Declarative Pipeline.
+    agent any         ###"Run this pipeline on any available Jenkins agent/node."
+    environment {  
+        INSTITUTE_NAME = "Pravin"
+    }
+    stages {
+        stage('Checkout') {
+            git url: 'https://github.com/Pravin/sample-java-app.git'
+        }
+        stage('Build'){
+            steps {
+                sh '''
+                if [ -d ".m2" ]; then    ###Checks if a directory named .m2 exists.
+                    echo "Using cached dependencies"
+                else
+                    mvn clean compile
+                fi
+                '''
+            }
+        }
+    }
+}
+    
+
+## 🔹 GitLab CI — Cache Dependencies
+You will learn how to **cache dependencies in GitLab CI**.
+
+stages:
+  - build
+
+build:  
+  stage: build
+  image: maven:3.8.1-jdk-17
+  cache:                         ## Caches Maven dependencies (.m2/repository) so future pipeline runs don't need to download them again, making builds faster.
+    key: maven-cache
+    paths:
+      - .m2/repository
+  script:
+    - git clone https://github.com/Pravin/sample-aapp.git
+    - cd sample-aapp
+    - mvn clean compile
