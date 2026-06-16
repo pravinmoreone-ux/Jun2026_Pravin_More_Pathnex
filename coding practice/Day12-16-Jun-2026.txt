@@ -1,0 +1,193 @@
+# Day 12 — File Content, RDS Skeleton, Rolling Update, Backup
+
+## 🔹 Ansible — Ensure File With Content
+
+
+- name: Creating config file from Pathnex Pravin
+  hosts: all
+  become: yes
+
+  tasks:
+   - name: write content to file
+     copy:
+       dest: /etc/pravin.conf
+       content: |
+         Welcome to Pravin Devops Training
+         Today is Day 12
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+content: |
+Writes multiline content into the file.
+| allows multiple lines.
+
+Destination path where file will be created.
+
+
+copy: Module
+
+The copy module is used to:
+
+Copy files
+Create files
+Write content into files
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+## Terraform for RDS instance
+
+## 🔹 Terraform — RDS Skeleton
+
+resource "aws_db_instance" "PravinRDS" {
+    allocated_storage = 20
+    engine            = "mysql"
+    instance_class    = "db.t3.micro"
+    name              = "pravindb"
+    username          = "admin"
+    password          = "password123" 
+    skip_final_snapshot = true
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>..
+
+resource → Terraform creates something in AWS
+aws_db_instance → Type of resource = RDS Database
+"PravinRDS" → Local name/reference of the resource
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+## ### Kubernetes — Rolling Update Strategy
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pathnex-rolling
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: roll
+  template:
+    metadata:
+      labels:
+        app: roll
+    spec:
+      containers:
+        - name: web
+          image: nginx
+
+
+
+
+Updates Pods gradually instead of deleting all at once.
+Ensures application availability during updates.
+
+Kubernetes can create 1 extra Pod temporarily during update.
+Total Pods can become: 3 + 1 = 4
+
+During update, maximum 1 Pod can be unavailable.
+At least 2 Pods will stay running.
+
+Deployment manages Pods having label: app: roll
+
+New Pods created by Deployment get label: app: roll
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+.................
+
+
+
+
+
+## 🔹 Shell Script — Backup Directory
+
+#!/bin/bash
+
+SOURCE="/var/log"
+DEST="/backup/pravin-$(date +%F).tar.gz"
+
+tar -czf $DEST $SOURCE
+echo "Backup created at: $DEST"
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+# Multi-branch Pipelines
+
+## 🔹 Jenkins Pipeline — Multi-branch
+You will learn how to **handle multiple branches in Jenkins pipelines**.
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "PRAVIN"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+    }
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+## 🔹 GitLab CI — Branch Specific Jobs
+You will learn how to **run jobs for specific branches in GitLab CI**.
+
+stages:
+  - build
+
+build-main:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - mvn clean compile
+  only:
+    - main
+
+build-dev:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - mvn clean compile
+  only:
+    - dev
+
+
+stages:
+  - build
+
+build-main:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - mvn clean compile
+  only:
+    - main
+
+build-main:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - mvn clean compile
+  only:
+    - dev
