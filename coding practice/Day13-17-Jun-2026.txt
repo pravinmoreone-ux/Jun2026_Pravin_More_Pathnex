@@ -139,5 +139,13 @@ build:   ## Job Definition
 
 
 
+variable "names" {
+  default = ["pravin", "rahul", "amit"]
+}
+
+output "upper_names" {
+  value = [for name in var.names : upper(name)]
+}
+
 
 

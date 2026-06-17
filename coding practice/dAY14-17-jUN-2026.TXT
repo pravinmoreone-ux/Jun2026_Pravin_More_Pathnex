@@ -1,0 +1,130 @@
+# Day 14 — MINI PROJECT
+
+Complete these steps:
+
+## 1️⃣ Terraform — Create EC2 (any instance type)
+
+- VPC
+- Subnet
+- Internet gateway
+- Route table
+- EC2 (c5.xlarge / r5.2xlarge / r6i.4xlarge / c6i.8xlarge / c6a.12xlarge)
+
+
+provider "aws" {
+    region = "us-east-1"
+}
+
+resource "aws_vpc" "vpc_pravin" {
+    cidr_block = "172.168.0.0/20"
+}
+
+resource "aws_subnet" "subnet_pravin" {
+    vpc_id = aws_vpc.vpc_pravin.id
+    cidr_block  = "172.168.0.0/24"
+    map_public_ip_on_launch = true
+}
+
+resource "aws_internet_gateway" "igw_pravin" {
+    vpc_id = aws_vpc.vpc_pravin.id
+}
+
+resource "aws_route_table" "route_table_pravin" {
+    vpc_id = aws_vpc.vpc_pravin.id
+
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.igw_pravin.id
+    }
+}
+
+resource "aws_route_table_association" "rt_association" {
+    subnet_id      = aws_subnet.subnet_pravin.id
+    route_table_id = aws_route_table.route_table_pravin.id
+}
+
+## security group
+
+resource "aws_security_group" "pravin_sg" {
+    vpc_id = aws_vpc.vpc_pravin.id
+
+    ingress {
+        from_port  =  22
+        to_port    =  22
+        protocol   =  "tcp"
+        cidr_blocks =  ["0.0.0.0/0"]
+    }
+
+    egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"] 
+    }
+}
+
+
+locals {
+  instance_types = [
+    "c5.xlarge",
+    "r5.2xlarge",
+    "r6i.4xlarge",
+    "c6i.8xlarge",
+    "c6a.12xlarge"
+  ]
+}
+
+
+# EC2 Instance
+resource "aws_instance" "pravin_ec2_multi_instance" {
+  for_each = toset(local.instance_types) 
+
+  ami                         = "ami-0c02fb55956c7d316"
+  instance_type               =  each.value                ##  "c5.xlarge"
+  subnet_id                   = aws_subnet.subnet_pravin.id
+  vpc_security_group_ids      = [aws_security_group.pravin_sg.id]
+  associate_public_ip_address = true
+
+  tags = {
+    Name = "Pravin-EC2-${each.value}"
+  }
+}
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+## 2️⃣ Ansible — Install Nginx & Deploy HTML File
+
+
+- name: Install Nginx and Deploy HTML FILE
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install nginx
+      yum:
+        name: nginx
+        status: present
+    
+    - name: Copy HTML file
+      copy:
+        src: index.html
+        dest: /usr/share/nginx/html/index.html
+
+    - name: Start and Enable Nginx
+      service: 
+        name: nginx
+        state: started
+        enabled: yes                  ## start automaticaly when system restart
+
+####  state: started
+### Ensure service is running
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>..
+
+
+
+
+
+
+
