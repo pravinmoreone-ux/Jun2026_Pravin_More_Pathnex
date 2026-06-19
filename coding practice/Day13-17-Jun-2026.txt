@@ -1,0 +1,151 @@
+# Day 13 — DEBUG DAY For Pravin
+
+Fix the following broken files:
+
+## 🔹 Ansible (broken)
+
+- name:  "Broken fix by pravin" 
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Install
+      yum:
+        name: nginx
+        state: present
+        enabled: yes
+
+
+
+## state: present means the package/resource should exist on the system.
+## enabled: yes means the service will automatically start when the server reboots.
+.>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+## 🔹 Terraform (broken)
+
+resouce "aws_instance" "FixingEC2" {
+    ami           = "ami-0abcd1234abcd1234"
+    instance_type = "c5.large"
+    
+    tags = {
+        Name = "Broken-Fixed"
+    }
+}
+
+## syntax | indentation | and colon used instead of equal sign
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+## 🔹 Kubernetes (broken)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: broken
+  template:
+    metadata:
+      labels:
+        app: broken
+    spec:
+      containers:
+        - name: app
+          image: nginx
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
+
+
+
+# Matrix Builds
+
+## 🔹 Jenkins Pipeline — Matrix Build
+You will learn how to **run the same build on multiple environments**.
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+
+    ## starts the Matrix Build section in Jenkins Pipeline.
+    ## Jenkins will run the same pipeline 
+    ## multiple times using different configurations automatically.
+    
+    matrix {
+        axes {                  ##axes defines the list of changing variables.
+            axis {              ## axis defines one variable and its values.
+                name 'JAVA_VERSION'
+                values '8', '11', '17'
+            }
+        }
+
+
+        ## matrix Used to run the same 
+        ## pipeline multiple times with different combinations automatically.
+
+        
+
+        stages {
+            stage('Build') {
+                steps {
+                    sh "echo Building with Java $JAVA_VERSION"
+                }
+            }
+        }
+    }
+}
+
+>>>>>>>
+
+stages contains all pipeline stages.
+stage('Build') defines the build phase.
+steps contains commands to execute.
+sh runs shell commands.
+In matrix build, this stage runs separately for each Java version.
+
+
+Matrix build means:
+
+Run the same pipeline multiple times with different values automatically.
+
+
+>>>>>>>>>>>>>>>>>>>>
+
+
+
+## 🔹 GitLab CI — Matrix Jobs
+You will learn how to **run jobs across multiple environments using matrix**.
+
+stages:
+  - build ## Defines pipeline stages.
+
+build:   ## Job Definition
+  stage: build
+  image: maven:3.8.1-jdk-17
+  parallel:                   ## This creates multiple parallel jobs automatically.
+    matrix:
+      - JAVA_VERSION: ['8', '11', '17']
+  script:
+    - echo "Building with Java $JAVA_VERSION"
+
+
+
+
+variable "names" {
+  default = ["pravin", "rahul", "amit"]
+}
+
+output "upper_names" {
+  value = [for name in var.names : upper(name)]
+}
+
+
+
