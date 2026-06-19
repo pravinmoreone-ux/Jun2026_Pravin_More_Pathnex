@@ -1,0 +1,164 @@
+# Day 17 — Loops, ALB, Namespace, Top Processes
+
+## 🔹 Ansible — Create Multiple Users in Loop
+
+ By Pravin More
+
+ - name: Create Miltiple users
+   hosts: all
+   become: yes
+
+    vars:
+      users:
+        - dev1
+        - dev2
+        - dev3
+
+   tasks:
+     - name: Create User
+       user:
+         name: "{{ item }}"     ### item represents one value from the loop.
+         state: present
+       loop: "{{ users }}"      ###Tells Ansible to iterate through the users list one by one
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
+Ansible uses the user module to automate Linux user management such as:
+
+creating users
+deleting users
+setting passwords
+assigning groups
+managing shells and home directories
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+## 🔹 Terraform — Application Load Balancer by pravin
+
+resource "aws_lb" "pravin-lb" {
+    name               = "pravin-lb"
+    load_balancer_type = "application"
+    subnets            = [aws_subnet.pravinsubnet.id]
+
+    tags = {
+        Name = "Pravin-ALB"
+    } 
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+aws_lb → AWS Load Balancer resource type.
+
+| Type        | Purpose                          |
+| ----------- | -------------------------------- |
+| application | HTTP/HTTPS traffic               |
+| network     | TCP/UDP high-performance traffic |
+| gateway     | Gateway Load Balancer            |
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+Kubernetes — Namespace + Deployment - by Pravin More
+
+apiVersion: v1
+kind: Namespace
+metadata: 
+  name: pravin-namespace
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: Pravin-Deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pravin
+  template:
+    metadata:
+      label:
+        app: pravin
+  spec:
+    containers:
+      - name: nginx
+        image: nginx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+>>>>>>>>>>>>> Pravin Shell Script — Top 5 Memory Processes
+
+#!/bin/bash
+
+ps aux --sort=-%mem | head -n 6
+
+### shows all running processes sorted by highest memory usage.
+###  Displays:
+
+#### 1 header line
+####  Top 5 memory-consuming processes
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+## 🔹 Jenkins Pipeline — Simulated Deployment
+You will learn how to **simulate deployment to different environments**.
+
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'],
+                                    description: 'Deployment Environment')
+    }
+
+    environment {
+        INSTITUE_NAME = "Pravin"
+    }   
+
+    stages {
+        stage('Deploy'){
+            steps{
+                sh 'echo "Deploying $INSTITUTE_NAME application to $ENVIRONMENT"'
+            }
+        }
+    }
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+It creates a dropdown list in Jenkins so the 
+user can select an environment before running the pipeline.
+
+
+choice is a Jenkins parameter type used to provide predefined options.
+Instead of typing manually, users select from a dropdown.
+
+
+=============>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+GitLab CI — Deployment Simulation
+You will learn how to **simulate deployment in GitLab CI using environment variable**.
+
+stages:
+  - deploy
+
+variables:
+  INSTITUTE_NAME: "Pathnex"
+  ENVIRONMENT: "staging"
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying $INSTITUTE_NAME application to $ENVIRONMENT"
+
+    ### GitLab automatically reads this file and executes the pipeline.
+
+    
