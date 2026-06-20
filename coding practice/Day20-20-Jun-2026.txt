@@ -1,0 +1,119 @@
+# Day 20 — DEBUG DAY
+
+Fix these intentionally broken files:
+
+## 🔹 Ansible — Broken
+
+---
+- name: Install stuff
+  hosts: all
+  become: yes 
+
+  tasks:
+   - name: install
+     yum:
+       name: httpd
+       state: present
+
+   - name: start server
+     service:
+       name: httpd
+       state: started
+       enabled: yes 
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+## 🔹 Terraform — Broken fix by pravin
+
+resource "aws_instance" "Bad_fixed" {
+  ami           = "ami-0abcd1234abcd1234"
+  instance_type = "c6i.8xlarge"
+  
+  tags = {
+    Name = "Fix broken"
+  }
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+Kubernetes — Broken fix by pravin
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: broken-fix
+  template:
+    metadata:
+      labels:
+        app: broken-fix
+    spec:
+      containers:
+        - name: app
+          image: nginx
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>..
+
+by Pravin
+
+Jenkins Pipeline — Using Credentials
+You will learn how to **use credentials securely in Jenkins**.
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Use Secret') {
+            steps {
+                    withCredentials([string(credentialsId: 'PRAVIN_API_KEY', variable: 'API_KEY')]) {
+                    sh 'echo "Using secret $API_KEY for $INSTITUTE_NAME"'
+                }
+            }
+        }
+    }
+}
+
+
+withCredentials([
+Jenkins secure credentials wrapper.
+Used to:
+hide secrets
+avoid hardcoding passwords/API keys
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+ GitLab CI — Using CI/CD Variables
+You will learn how to **use GitLab CI variables securely**.
+
+stages:
+  - build
+
+variables:
+  INSTITUTE_NAME: "Pravin"
+  API_KEY: "PLACEHOLDER_SECRET_PRAVIN"
+
+build:
+  stage: build
+  image: alpine:latest
+  script:
+    - echo "Using secret $API_KEY for $INSTITUTE_NAME"
+
+
+
+
+
