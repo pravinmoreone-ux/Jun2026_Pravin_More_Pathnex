@@ -1,0 +1,303 @@
+# Day 22 — Handlers, Security Group, DaemonSet, Disk Monitor
+
+-- By Pravin More
+
+## 🔹 Ansible — Use Handler on Config Change
+
+-- By Pravin More
+
+---
+- name: config nginx for Pravin
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Copy Nginx Config
+      copy:
+        dest: /etc/nginx/nginx.conf
+        content: |  
+          user nginx;
+          worker_processes auto;
+      notify: Restart nginx
+       
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+handlers:
+Special section in Ansible.
+Handlers run only when notified by a task.
+
+Purpose:
+
+Avoid unnecessary service restarts.
+Used mostly for restarting services after configuration changes.
+
+copy:
+Uses Ansible copy module.
+Copies content or file to remote server.
+
+dest: /etc/nginx/nginx.conf
+Destination path on target server.
+This file will be created or overwritten.
+
+content: |
+| means multiline content block in YAML.
+Everything below it becomes file content.
+
+user nginx;
+Tells Nginx to run worker processes as nginx user.
+
+user nginx;
+Runs nginx worker processes using nginx user.
+
+worker_processes auto;
+Automatically sets worker processes according to CPU cores
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+ -------------Terraform — Security Group by pravin more-----------------
+
+resource "aws_security_group" "PravinSG" {
+    name   = "PravinSG"
+    vpc_id = aws_vpc.PravinVPC.id
+
+    ingress {
+        from_port     = 80
+        to_port       = 80
+        protocol      = "tcp"
+        cidr_blocks   = ["0.0.0.0/0"]
+    }
+
+    tags = {
+        Name = "Pravin-SG"
+    }
+}
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+resource "aws_security_group" "PravinSG"
+Creates an AWS Security Group using Terraform.
+aws_security_group → Terraform AWS resource type.
+PravinSG → local Terraform resource name/reference.
+
+ingress {}
+Defines inbound rules.
+Controls incoming traffic.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+ now kubernets Daemon seet - by Pravin
+
+ Kubernetes — DaemonSet
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: Pravin-Daemon-Set
+spec:
+  seleector:
+    matchLabels:
+      app: ds
+  template:
+    metadata: 
+      labels:
+        app: ds
+    spec:
+      - containers:
+          - name: monitor
+            image: busybox
+            command: ["sh", "-c", "while true; do e ach Pravin Node Monitor; slloep 20; done;"]
+
+
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: pathnex-daemon
+spec:
+  selector:
+    matchLabels:
+      app: ds
+  template:
+    metadata:
+      labels:
+        app: ds
+    spec:
+      containers:
+        - name: monitor
+          image: busybox
+          command: ["sh", "-c", "while true; do echo Pravin Node Monitor; sleep 20; done"]
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+By Pravin More -  Shell Script — Monitor Disk Usage
+
+#!/bin/bash
+
+USAGE=$(df -h / | tail -1 | awk '{print $5}')
+
+echo "Disk Usage: $USAGE"
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+#!/bin/bash
+Called shebang.
+Tells Linux to execute script using Bash shell.
+
+USAGE=$(...)
+Stores command output into variable USAGE.
+
+df = disk filesystem command
+Shows disk usage.
+-h → human readable format (GB, MB)
+
+tail -1
+Takes last line from output.
+
+awk '{print $5}'
+awk is a text-processing tool.
+Prints 5th column.
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>--------------------------------------------------
+
+
+
+# Advanced Triggers
+
+## 🔹 Jenkins Pipeline — Trigger on Git Tag
+You will learn how to **trigger builds on Git tags** with realistic tags.
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "PRAVIN"
+        TEAM = "Devops"
+        ENV = "prod"
+    }
+    
+    triggers {
+        pollSCM('H/15 * * * *')
+    }
+    
+    satges {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Pravin/sample-java-app.git', branch: 'main'
+            }
+        }
+
+        stage(Build') {
+            when {
+                buildingTag()
+            }
+            steps {
+                sh 'echo "Building $INSTITUTE_NAME app for $TEAM team in $ENV enviornment"'
+            }
+        }
+    }
+}
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+pollSCM
+Jenkins checks Git repository periodically for changes.
+
+H/15 * * * *'
+Cron syntax.
+Checks every 15 minutes.
+
+Meaning:
+
+If code changes in Git repo, trigger pipeline
+
+| Field   | Meaning |
+| ------- | ------- |
+| Minute  | `H/15`  |
+| Hour    | `*`     |
+| Day     | `*`     |
+| Month   | `*`     |
+| Weekday | `*`     |
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+GitLab CI — Trigger on Tag
+You will learn how to **trigger CI jobs when a tag is pushed**.
+
+stages:
+  - build
+
+variables:
+  INSTITUTE_NAME: "Pathnex"
+  TEAM: "DevOps"
+  ENV: "prod"
+
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - echo "Building $INSTITUTE_NAME app for $TEAM team in $ENV environment"
+  only:
+    - tags
+
+
+>>>>>>>restricts execution to tags only.
+
+    ===============================================================
+
+
+
+-- Pravin More - git Actions
+
+
+name : Build on tag
+
+on:
+  push:
+    tags:
+      - "*"    ### Runs workflow only when a Git tag is pushed.
+
+env:
+  INSTITUTE_NAME: "Pravin"
+  TEAM: "Devopos"
+  ENV: "prod"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+  steps:
+    - name: Checkout Code
+      uses: action/checkout@4    ## Downloads repository code into runner.
+
+    - name: setup Java
+      uses: actions/setup-java@v4           ##Installs Java 17 on runner.
+      with:
+          distribution: 'temurin'
+          java-version: '17'
+
+    - name: Build Application
+      run: echo "Building $INSTITUTE_NAME app for $TEAM team in $ENV environment"
+
+
+>>>>>>>>>>>>
+
+Reuse an existing GitHub Action
+
+with is used to: Pass input parameters to an action
+
+

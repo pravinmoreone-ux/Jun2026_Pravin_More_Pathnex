@@ -1,0 +1,176 @@
+# Day 18 — Facts, Variables, Affinity, Log Archiving
+
+## 🔹 Ansible — Use Ansible Facts
+
+---
+- name: Show system facts for Pravin
+  hosts: all
+
+  tasks:
+    - name: Print OS info
+      debug:
+        var: ansible_facts['os_family']
+
+    - name: Print IP address
+      debug:
+        var: ansible_facts['default_ipv4']['address']
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Display system information for Pravin servers.
+debug module prints output on the terminal.
+ansible_facts: Ansible automatically collects system information called facts.
+default_ipv4
+
+Contains information about the main network interface.
+
+address
+
+Extracts only the IP address.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Terraform variable output main   .tf files
+
+# variables.tf
+variable "instance_type" {
+    default = "c6a.12xlarge"
+}
+
+
+# main.tf
+resource "aws_instance" "PravinServer" {
+    ami            = "ami-0abcd1234abcd1234"
+    instance_type  = var.instance_type
+}
+
+
+# output
+output "pravin_ec2_ip" {
+  value = aws_instance.PravinServer.public_ip
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+Kubernetes — Node Affinity   - by Pravin
+
+Node Affinity in Kubernetes is used to control on which node a Pod should run.
+
+affinity:
+Defines scheduling rules.
+Kubernetes scheduler checks these rules before placing the Po
+
+There are 3 main types:
+
+Node Affinity
+Pod Affinity
+Pod Anti-Affinity
+
+| Word                     | Meaning                                                           |
+| ------------------------ | ----------------------------------------------------------------- |
+| requiredDuringScheduling | Rule is mandatory during Pod scheduling                           |
+| IgnoredDuringExecution   | After Pod starts running, Kubernetes ignores future label changes |
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pravin-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: disktype
+                operator: In
+                values:
+                  - ssd
+  container:
+    - name: web
+      image: nginx
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Shell Script — Archive Log Files
+
+#!/bin/bash
+
+tar -czf /backup/pathnex-logs-$(date +%F).tar.gz /var/log/
+tar -czf /backup/pravin-logs-$(date +%F).tar.gz /var/log/
+echo "Logs archived."
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>..
+
+This command creates a compressed backup archive of the /var/log/ directory.
+
+| Option | Meaning             |
+| ------ | ------------------- |
+| c      | Create archive      |
+| z      | Compress using gzip |
+| f      | Save to file        |
+
+  
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Jenkins Pravin 
+
+
+## 🔹 Jenkins Pipeline — Rollback on Failure
+You will learn how to **simulate rollback if deployment fails**.
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pravin"
+    }
+    stages {
+        stage('Deploy') {
+            steps {
+                script {
+                    try {
+                        sh 'echo "Deploying $INSTITUTE_NAME application..."'
+                        sh 'exit 1' // simulate failure
+                    } catch (Exception e) {
+                        echo "Deployment failed. Rolling back $INSTITUTE_NAME application..."
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+GitLab CI — Rollback Simulation 0- by Pravin
+You will learn how to **simulate rollback using after_script**.
+
+stages:
+  - deploy
+
+variables:
+  INSTITUTE_NAME: "Pravin"
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying $INSTITUTE_NAME application..."
+    - exit 1
+  after_script:
+    - echo "Deployment failed. Rolling back $INSTITUTE_NAME application..."
+
+
+
+
