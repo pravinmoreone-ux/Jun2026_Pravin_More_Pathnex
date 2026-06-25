@@ -1,0 +1,166 @@
+# Day 23 — Tags, EIP, HPA, Kill Process
+
+## 🔹 Ansible — Add Tags to Users
+
+
+---
+- name: Createa users and tags
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: create user
+      user:
+        name: devuser
+        comment: "Pravin developer USer"
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+## 🔹 Terraform — Elastic IP
+
+
+resource "aws_eip" "pravin_eip" {
+    aws_instance = aws_instance.pravinec2.id
+
+    tags = {
+        Name = "pravin_eip"
+    }
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+🔹 Kubernetes — Horizontal Pod Autoscaler (HPA)
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pravin-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pravin-deployment
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+HPA automatically increases or decreases
+ the number of pods based on CPU, memory, or custom metrics.
+
+apiVersion: autoscaling/v2
+Uses HPA API version autoscaling/v2
+Supports advanced metrics and scaling features
+
+
+Scaling is based on a resource metric like CPU or memory
+Desired average CPU usage = 50%
+HPA compares current CPU usage with this value
+
+HPA will monitor and scale this deployment:
+
+Deployment name → pravin-deploy
+HPA increases/decreases replicas of this deployment automatically
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+ Shell Script — Kill High CPU Process
+
+#!/bin/bash
+
+PID=$(ps aux --sort=-%cpu | awk 'NR==2{print $2}')
+
+echo "Killing process: $PID"
+kill -9 $PID
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+awk 'NR==2{print $2}'
+NR==2 → selects second row
+First row is header
+Second row is top CPU-consuming process
+print $2
+Prints PID column
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+# Docker Integration
+
+## 🔹 Jenkins Pipeline — Build Docker Image
+You will learn how to **build and tag Docker images** with proper labels.
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pravin"
+        TEAM = "DEVOPS"
+        ENV = "staging"
+        PROJECT = "WebApp"
+    }
+
+    stages {
+        stage ('Checkout') {
+            steps {
+                git url: 'https://github.com/Parvin/sample-java-app.git'
+            }
+        }
+        stage ('Build'){
+            steps {
+                sh '''
+                docker build -t pravin/webapp:${ENV}-${BUILD_NUMBER} \
+                --label "INSTITUTE_NAME=$INSTITUTE_NAME" \
+                --label "TEAM=$TEAM" \
+                --label "ENV=$ENV" \
+                --label "PROJECT=$PROJECT" .
+                '''
+            }
+        }
+    }
+}
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+## 🔹 GitLab CI — Build Docker Image
+You will learn how to **build Docker images in GitLab CI**.
+
+stages:
+  - docker-build
+
+variables:
+  INSTITUTE_NAME: "Pathnex"
+  TEAM: "DevOps"
+  ENV: "staging"
+  PROJECT: "WebApp"
+
+docker-build:
+  stage: docker-build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t pathnex/webapp:${ENV}-${CI_PIPELINE_ID} \
+      --label "INSTITUTE_NAME=$INSTITUTE_NAME" \
+      --label "TEAM=$TEAM" \
+      --label "ENV=$ENV" \
+      --label "PROJECT=$PROJECT" .
+
+
+

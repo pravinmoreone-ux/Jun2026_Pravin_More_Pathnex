@@ -74,3 +74,70 @@ fi
 
 
 
+
+# NodeJS Build
+## 🔹 Jenkins Pipeline — NodeJS Build
+You will learn how to **install dependencies, run tests, and build a NodeJS project**.
+
+pipeline{
+    agent any
+    tools {
+        nodejs 'NodeJS-16'
+    }
+    stages {
+        stage('Checkout'){
+            steps {
+                git url: 'https://github.com/Pathnex/'
+            }
+        }
+        stage('Install Dependencies'){
+            steps{
+                sh 'npm install'
+            }     
+        }
+        stage('Run Tests'){
+            steps{
+                sh 'npm test'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'npm run build'
+            }    
+        }
+    }   
+}
+
+
+===================
+
+## 🔹 GitLab CI — NodeJS Build
+
+stages:
+  - install
+  - test
+  - build
+
+node-install:
+  stage: install
+  image: node:16
+  script: 
+    - git clone https://github.com/Pathnex/sample-node-app.git
+    - cd sample-node-app
+    - npm install
+
+node-test:
+  stage: test
+  image: node:16
+  script:
+    - cd sample-node-app
+    - npm test
+
+node-build:
+  stage: build
+  image: node:16
+  script:
+    - cd sample-node-app
+    - npm run build
+
