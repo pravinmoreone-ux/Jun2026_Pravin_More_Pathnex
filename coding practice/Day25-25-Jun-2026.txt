@@ -1,0 +1,244 @@
+# Day 25 — Lineinfile, Key Pair, Multi-Container, File Count
+
+## 🔹 Ansible — Modify Existing Line
+
+
+---
+- name: Update SSH Config for Pravin
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: disable root login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^PermitRootLogin"
+        line: "PermitRootLogin no"
+
+        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+        lineinfile module → edits a specific line in a file.
+path → target  SSH config file.
+regexp → searches for existing PermitRootLogin line.
+line → replaces it with PermitRootLogin no.
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+## 🔹 Terraform — EC2 Key Pair Output
+
+
+resource "aws_key_pair" "pravinkey" {
+    key_name     =  "pravinkey"
+    public_key   =  file("~/.ssh/id_rsa.pub")
+}
+
+output "Pravin_key_pair" {
+    value = aws_key_pair.pravinkey.key_name
+}
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+resource → Used to create/manage AWS resources.
+aws_key_pair → Terraform resource type for AWS EC2 Key Pair.
+"pravinkey" → Local Terraform name/reference.
+=====================================================
+Terraform built-in function:
+Reads file content from local system.
+>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+ 🔹 Kubernetes — Multi-Container Pod (Sidecar Logging)
+
+apiVersion: v1
+kind: pod
+metadata: 
+  name: pravin-sidecar
+spec:
+  - name: app
+    image: nginx
+  - name: log-writer
+    image: busybox
+    command:
+      - sh
+      - c
+      - while true; do echo log entry; sleep 5;done
+
+#    command: ["sh" , "-c", "while true; do echo log entry; sleep 5 done"]
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+count files in directory by Pravin More
+
+Shell Script — Count Files in Directory
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#!/bin/bash
+
+DIR="/var/log"
+
+COUNT=$(ls $DIR | wc -l)
+
+
+echo "Total files in $DIR: $COUNT"
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+"|" pipe  ->  Passes output of one command to another.
+
+
+wc - word count
+-l   line count
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Jenkins Pipeline — Cache Dependencies
+by pravin
+
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "pRAVIN"
+        TEAM = "PRAVIN TEAM"
+        ENV  = "DEV"
+    }
+
+    stages {
+        stage('Checkout'){
+            steps{
+                git url: 'https://github.com/Pravin/sample-java-app.git'
+            }
+        }
+        stage('Build'){
+            steps {
+                sh '''
+                if [ -d ".m2" ]; then     ### This is a Linux shell condition used to check whether a directory exists.
+                    echo "Using cached Dependencies for $INSTITUTE_NAME in $ENV by $TEAM"
+                else
+                    mvn clean compile
+                fi
+                '''
+            }
+        }
+    }
+}
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+GitLab CI — Cache Dependencies
+You will learn how to **cache dependencies in GitLab CI with tags**.
+
+stages:
+  - build
+
+variables:
+  INSTITUTE_NAME: "Pravin"
+  TEAM: "DevOps"
+  ENV: "staging"
+
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  cache:
+    key: "${ENV}-maven-cache"
+    paths:
+      - .m2/repository
+  script:
+    - mvn clean compile
+    - echo "Cached dependencies for $INSTITUTE_NAME in $ENV by $TEAM"
+
+    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    efines Docker image used by the runner.
+
+    So Maven and Java must exist.
+
+    Cache module ---->  Used to store reusable files between pipeline runs.| Avoid downloading/installing same dependencies repeatedly
+
+    Unique cache identifier.
+
+    Different environments can have separate caches.
+
+    Specifies which files/folders to cache.
+
+    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+This GitLab CI/CD cache configuration is used to store Maven dependencies so future pipeline runs become faster.
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>..
+
+
+Git Action:
+
+
+name: Maven build with cache
+
+on: 
+  push :
+    tags:
+      - "*"
+
+env:
+  INSTITUTE_NAME: "pRAVIN"
+  TEAM          : "DEVOPS"
+  ENV           : "staging"
+
+jobs: 
+  build: 
+    runs-on: ubuntu-latest
+
+  steps:
+    - name: checkout code
+      use: actions/checkout@v4
+
+    - name: setup java 17
+      use: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'maven'
+
+    - name: Build Maven Project
+      run: mvn clean compile
+    
+    - name: Print Message
+      run: echo "Cache Dependencies for $INSTITUTE_NAME in $ENV BY $TEAM"
+
+       >>>>>>>>>>>>>>>>>>>>>>>>>
+
+       uses → Download reusable action
+with → Pass configuration to action
+cache → Store Maven dependencies
+run → Execute Linux/Maven commands
+
+uses
+
+uses is used to execute prebuilt GitHub Actions from GitHub Marketplace or repositories.
+
+with
+
+with passes input parameters to a GitHub Action.
+
+run
+
+run executes shell commands directly on the GitHub runner.
+
+cache
+
+cache stores reusable dependencies like Maven packages to speed up future workflow runs.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
