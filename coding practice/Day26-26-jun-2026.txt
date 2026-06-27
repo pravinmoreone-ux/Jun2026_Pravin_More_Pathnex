@@ -1,0 +1,191 @@
+# Day 26 — Packages + Services, R53 Record, InitContainer, Status Script
+
+## 🔹 Ansible — Install + Start Multiple Services
+
+
+---
+- name: Install and start multiple service 
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install nginx
+      yum: 
+        name:
+          - httpd
+          - firewalld
+        state: present
+
+    - name: Enabled and start services
+      service:
+        name: "{{ item }}"             ### item comes from the loop.
+        state: started
+        enabled: yes
+      loop:                            ### Runs the same task for multiple services.
+        - httpd
+        - firewalld  
+
+
+
+        ======================================================
+
+
+       Terraform — Route53 Record
+
+
+
+resource "aws_route53_record"  "PravinRecord" {
+    zone_id = "Z123434234"
+    name    = "app.pravin.com"
+    type    = "A"
+    ttl     = 300
+    records = [aws_eip.PravinEIP.public_ip]
+}      
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+ Common DNS Record Types
+
+| Type      | Full Form           | Purpose                 | What It Does                                 | Example                           |
+| --------- | ------------------- | ----------------------- | -------------------------------------------- | --------------------------------- |
+| **A**     | Address Record      | Domain → IPv4           | Maps domain name to IPv4 address             | `app.pravin.com → 13.233.100.25`  |
+| **AAAA**  | IPv6 Address Record | Domain → IPv6           | Maps domain name to IPv6 address             | `app.pravin.com → 2401:abcd::1`   |
+| **CNAME** | Canonical Name      | Domain → Another Domain | Creates alias for another domain             | `www.pravin.com → app.pravin.com` |
+| **MX**    | Mail Exchange       | Email Server            | Defines mail server for email delivery       | `pravin.com → mail.pravin.com`    |
+| **TXT**   | Text Record         | Verification/SPF/DKIM   | Stores text-based verification/security data | SPF, DKIM, Google verification    |
+| **NS**    | Name Server         | DNS Servers             | Specifies authoritative DNS servers          | `ns-1.awsdns.com`                 |
+| **PTR**   | Pointer Record      | Reverse DNS             | Maps IP address back to domain               | `13.233.100.25 → app.pravin.com`  |
+| **SRV**   | Service Record      | Service Discovery       | Defines service location and port            | `_sip._tcp.pravin.com`            |
+| **SOA**   | Start of Authority  | DNS Zone Information    | Contains DNS zone metadata                   | Serial number, refresh timer      |
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+>>>
+ Kubernetes — Init Container
+
+ apiVersion: v1
+ kind: pod
+ metadata:
+   name: Init-pod
+ spec:
+   initContainers:
+     - name: setup
+       image: busybox
+       command: ["sh" "-c" "echo Initializing; sleep 10"]
+   containers:
+     - name: main
+       image: nginx
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+Shell Script — System Status
+
+#!/bin/bash
+
+echo "Hostname: $(hostname)"
+echo "Uptime: $(uptime)"
+echo "IP: $(hostname -I)"
+
+
+#!/bin/bash
+
+echo "Hostname: $(hostname)"
+echo "uptime: $(uptime)"
+echo "IP: $(hostname -I)"
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+GitLab Dynamic Environments
+
+## 🔹 Jenkins Pipeline — Deploy to Dynamic Environment
+You will learn how to **simulate deployment to dynamic environments with tags**.
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pravin"
+        TEAM = "Devops"
+    }
+
+    parameters {
+        string (name: 'Environment' , defaultValue: 'dev' , description : "Depoyment Environment" )
+    } 
+
+    stages {
+        stage ('Deploy'){
+            sh 'echo "Deploying $INSTITUTE_NAME APP TO $ENVIRONMENT for $TEAM team"'
+        }
+    }
+}
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+GitLab CI — Dynamic Environment Deployment
+
+
+stages:
+  - Deploy
+
+variables:
+  INSTITUTE_NAME : "pRAVIN DEVOPS"
+  TEAM           : "Devops"
+
+deploy:
+  stage: Deploy
+  image: alphine:latest
+  environment: 
+    name: $CI_COMMIT_REF_NAME
+    url: https://$CI_COMMIT_REF_NAME.pravin.com
+  script:
+    - echo "deploying $INSTITUTE_NAME app to $CI_COMMIT_REF_NAME for $TEAM team"
+
+
+
+    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+    GIT ACTION 
+
+
+
+name: Deploy Application
+
+on:
+  workflow_dispatch:           ### Allows manual pipeline trigger from GitHub UI\
+    input:
+      Environment:
+        description: "Deployment Enviornment"
+        required: true
+        default: "dev"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+  env: 
+    INSTITUTE_NAME: Pravin
+    TEAM: Devops
+  
+  steps:
+    - name: Checkout
+      uses: action/checkout@v4
+
+    - name: Deploying Application
+      run: |
+        echo "DEPloying $INSTITUTE_NAME APP to  ${{ github.event.inputs.Environment }} for $TEAM team"
+
+
+        
+
+        
+    
