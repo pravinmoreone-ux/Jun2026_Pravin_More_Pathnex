@@ -1,0 +1,281 @@
+Day 27 — Copy Directory, EBS Volume, NodePort, Log Cleaner
+🔹 Ansible — Copy Directory Recursively
+name: Copy Pathnex files hosts: all become: yes
+
+tasks:
+
+name: Copy directory copy: src: /opt/pathnex/ dest: /backup/pathnex/ remote_src: yes
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+---
+- name: Copy Directory Recursively
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Copy directory
+      copy:
+        src: /opt/pravin
+        dest: /backup/pravin
+        remote_src: yes
+
+    
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+terraform
+
+
+resource "aws_ebs_volume" "pravinVolume" {
+    availability_zone = "us-east-1a"
+    size = 20
+
+    tags = {
+        Name = "Pravin-Volume"
+    }
+}
+
+resource "aws_volume_attachment" "pravinattach" {
+     device_name = "/dev/sdh"
+     volume_id   = aws_ebs_volume.pravinVolume.id
+     instance_id = aws_instance.pravinec2.id
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+An EBS volume must be in the same Availability Zone as the EC2 instance
+
+device_name = "/dev/sdh"
+
+Specifies the device name that AWS presents to the instance.
+
+Verify the new disk:
+
+lsblk
+
+Add an entry to /etc/fstab if you want the volume to mount automatically after a reboot.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+ Kubernetes — NodePort Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: pravin-nodeport
+spec:
+  type: NordPort
+  selector:
+    app: pravin
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+A Kubernetes Service acts like a traffic router. These three fields define how traffic flows from outside the cluster to your application.
+
+port: 80
+
+This is the port on which the Service listens inside the Kubernetes cluster.
+
+targetPort: 80
+
+This is the port on the container (Pod) where the application is actually running.
+
+nodePort: 30080
+
+This is the port opened on every Kubernetes node.
+
+Kubernetes receives the request on port 30080 and forwards it to the Service, which then forwards it to the Pod.
+
+| Field        | Purpose                                                 | Example |
+| ------------ | ------------------------------------------------------- | ------- |
+| `port`       | Port exposed by the Service inside the cluster          | `80`    |
+| `targetPort` | Port on the Pod/container where the application listens | `80`    |
+| `nodePort`   | External port opened on every Kubernetes node           | `30080` |
+
+
+......................................................................>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Shell Script — Clean Old Logs
+
+#!/bin/bash
+
+find /var/log -type f -mtime +7 -exec rm -f {} \;
+
+echo "Old logs removed."
+
+
+#!/bin/bash
+
+find /var/log  -type f -mtime +7 -exec -f {} \;
+
+echo "Old logs removed "
+
+
+| Part        | Description                                             | Example/Meaning                                             |
+| ----------- | ------------------------------------------------------- | ----------------------------------------------------------- |
+| `find`      | Linux command used to search for files and directories. | Starts the search.                                          |
+| `/var/log`  | Directory where the search begins.                      | Searches inside `/var/log` and all its subdirectories.      |
+| `-type f`   | Finds only **regular files**.                           | Excludes directories, symbolic links, etc.                  |
+| `-mtime +7` | Selects files modified **more than 7 days ago**.        | Files older than 7 days.                                    |
+| `-exec`     | Executes a command on each file found.                  | Runs `rm -f` for every matching file.                       |
+| `rm`        | Removes (deletes) a file.                               | Deletes the matched file.                                   |
+| `-f`        | Forces deletion without prompting.                      | Ignores nonexistent files and doesn't ask for confirmation. |
+| `{}`        | Placeholder for the current file found by `find`.       | Replaced with the file path, e.g., `/var/log/app.log`.      |
+| `\;`        | Marks the end of the command passed to `-exec`.         | Required to terminate the `-exec` command.                  |
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Jenkins Scripted Pipeline — Complex Logic
+
+
+node {
+    def envName = "dev"
+
+    env.INSTITUTE_NAME = "PRAVN"
+    env.TEAM = "Devops"
+
+    stage('Checkout'){
+        git url: 'https://github.com/Pravin/sample-java-app.git'
+    }
+
+    stage('Build'){
+        if (envName == "dev"){
+            sh "echo 'Building  $INSTITUTE_NAME app in ${envName} environment in $TEAM'"
+        } else {
+             sh "echo 'Skipping build for ${envName}'"
+        }
+
+    }
+
+    stage('Deploy') {
+        input message: "Approve deployment for ${envName}?"
+        sh "echo 'Deploying $INSTITUTE_NAME app to ${envName} for $TEAM team'"
+    }
+
+
+    }
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+| Code                                                                    | Purpose                | Explanation                                                                                                                                         |
+| ----------------------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `node {}`                                                               | Allocate Jenkins agent | Runs the entire pipeline on a Jenkins agent (worker node).                                                                                          |
+| `def envName = "dev"`                                                   | Groovy variable        | Creates a local variable named `envName` with the value `dev`.                                                                                      |
+| `env.INSTITUTE_NAME = "Pathnex"`                                        | Environment variable   | Creates an environment variable accessible as `$INSTITUTE_NAME` inside shell commands.                                                              |
+| `env.TEAM = "DevOps"`                                                   | Environment variable   | Creates an environment variable accessible as `$TEAM` inside shell commands.                                                                        |
+| `stage('Checkout')`                                                     | Pipeline stage         | Defines the **Checkout** stage.                                                                                                                     |
+| `git url: 'https://github.com/Pathnex/sample-java-app.git'`             | Clone repository       | Downloads the source code from the Git repository into the Jenkins workspace.                                                                       |
+| `stage('Build')`                                                        | Pipeline stage         | Defines the **Build** stage.                                                                                                                        |
+| `if (envName == "dev")`                                                 | Conditional statement  | Checks whether the Groovy variable `envName` is equal to `"dev"`.                                                                                   |
+| `sh 'echo "Building $INSTITUTE_NAME app in dev environment for $TEAM"'` | Shell command          | Prints a message. `$INSTITUTE_NAME` and `$TEAM` are expanded because they are environment variables.                                                |
+| `else`                                                                  | Alternate path         | Executes when `envName` is not `"dev"`.                                                                                                             |
+| `sh 'echo "Skipping build for $envName"'`                               | Shell command          | **Not fully correct.** `$envName` is a Groovy variable, not an environment variable, so it will not be expanded by the shell.                       |
+| `stage('Deploy')`                                                       | Pipeline stage         | Defines the **Deploy** stage.                                                                                                                       |
+| `input message: "Approve deployment for $envName?"`                     | Manual approval        | Pauses the pipeline and displays an approval prompt. Here, `$envName` is interpolated by Groovy because the `message` parameter is a Groovy string. |
+| `sh 'echo "Deploying $INSTITUTE_NAME app to $envName for $TEAM team"'`  | Shell command          | **Partially correct.** `$INSTITUTE_NAME` and `$TEAM` work, but `$envName` does not because it is not an environment variable.                       |
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+same in gitlab
+
+stages:
+  - Checkout
+  - Build
+  - Deploy
+
+variables:
+  INSTITUTE_NAME: "pRAVIN"
+  TEAM: "Devops"
+  ENV_NAME: "dev"
+
+checkout:
+  stage: Checkout
+  script:
+    - git clone 'https://github.com/pravn/java-app.git'
+
+build:
+  stage: build
+  script:
+    - | 
+      if [ "$ENV_NAME" = "dev" ]; then
+        echo "Building $INSTITUTE_NAME app in dev environment for $TEAM"
+      else
+        echo "Skipping build for $ENV_NAME"
+      fi
+
+deploy:
+  stage: deploy
+  when: manual
+  script:
+    - echo "Deploying $INSTITUTE_NAME app to $ENV_NAME for $TEAM team"
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  INSTITUTE_NAME: Pathnex
+  TEAM: DevOps
+  ENV_NAME: dev
+
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+  build:
+    runs-on: ubuntu-latest
+    needs: checkout
+    steps:
+      - name: Build stage
+        run: |
+          if [ "$ENV_NAME" = "dev" ]; then
+            echo "Building $INSTITUTE_NAME app in dev environment for $TEAM"
+          else
+            echo "Skipping build for $ENV_NAME"
+          fi
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+    steps:
+      - name: Deploy stage
+        run: |
+          echo "Deploying $INSTITUTE_NAME app to $ENV_NAME for $TEAM team"
+
+
+
+| Feature         | Jenkins      | GitLab         | GitHub Actions          |
+| --------------- | ------------ | -------------- | ----------------------- |
+| Execution       | `node` agent | runner         | runner                  |
+| Syntax          | Groovy       | YAML           | YAML                    |
+| Checkout        | manual git   | optional       | automatic action        |
+| Variables       | `env.*`      | `variables:`   | `env:`                  |
+| Manual approval | `input`      | `when: manual` | `environment approvals` |
+| Structure       | stages       | jobs/stages    | jobs/steps              |
