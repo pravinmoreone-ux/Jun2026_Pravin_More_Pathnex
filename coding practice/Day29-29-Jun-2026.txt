@@ -1,0 +1,487 @@
+Day 29 — Real-World Mini Project
+Complete the following:
+
+1️⃣ Terraform
+Create EC2 (choose: c5.xlarge / r5.2xlarge / r6i.4xlarge / c6i.8xlarge / c6a.12xlarge)
+Security group
+Key pair
+EBS volume
+Output IP
+
+
+provider "aws" {
+    region = "us-east-1"
+}
+
+
+
+----------------------key pair ---------------
+
+
+resource "aws_key_pair" "pravinkeypair" {
+    key_name = "pravin-key"
+    public_key = file("~/.ssh/id_rsa.public")
+}
+
+
+-----------------------------------------------------
+
+
+# -------------------------
+# Security Group
+# -------------------------
+
+
+resource "aws_security_group" "pravin_sg" {4
+    name = "pravin-sg"
+    description = "Allow SSH"
+
+    ingress {
+        description = "SSH access"
+        to_port = 22
+        from_port = 22
+        protocol = "tcp"
+        cidr_block = ["0.0.0.0/0"]
+    }
+
+    egress {
+        from_port = 22
+        to_port = 22
+        protocol = -1
+        cidr_block = ["0.0.0.0/0"]
+    }
+
+
+    tags = {
+        Name = "pravin - sg"
+    }
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+EC2 instance 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+resource "aws_instance" "pravin_ec2" {
+    ami     = "ami-0abcde1234abcde1234"
+    instance_type  = "c5.xlarge"
+    key_name       =  aws_key_pair.pravinkeypair.id
+    vpc_security_group_ids =   [aws_security_group.instance_sg.id]
+
+    tags = {
+    Name = "pravinec2"
+  }
+
+}
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+# -------------------------
+# EBS Volume
+# -------------------------
+
+
+
+resource "aws_ebs_volume"  "pravin_volume" {
+    availability_zone = aws_instance.pravin_ec2.availability_zone
+    size = 20
+
+    tags {
+        Name = "pravin_ebs"
+    }
+}
+
+
+resource "aws_volume_attach" "ebs_attach" {
+    device_name = "/dev/sdf"
+    volume_id = aws_ebs_volume.pravin_volume.id
+    instance_id = aws_instance.pravin_ec2.id
+}
+
+
+# Output Public IP
+# -------------------------
+output "ec2_public_ip" {
+  value = aws_instance.pravinec2.public_ip
+}
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+2️⃣ Ansible
+Install nginx
+Deploy "Welcome to Pathnex" HTML page
+Start & enable service
+
+
+
+#-----------------------
+
+
+---
+- name: Install nginx
+  hosts: any
+  become: yes
+
+  tasks:
+    - name: Install nginx
+      yum: 
+        name: nginx
+        state: present
+
+    - name: Deploy index.html
+      copy: 
+        content: "<h1> Welcome to Pravin</h1>"
+        dest: /usr/share/nginx/html/index.html
+
+    - name: Enable Service
+      service:
+        - name: nginx
+          state: started
+          enabled: yes
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+3️⃣ Kubernetes
+Create Deployment with PVC
+Expose via NodePort
+
+#======================
+
+pvc volume
+
+apiVersion: v1
+kind: PersistenceVolumeClaim
+metadata:
+  name: nginx-pvc
+spec:
+  accessModes: 
+    - ReadWriteOnce
+  resource:
+    requests:
+      storage: 1Gi
+
+
+==========
+
+deployment ===========
+
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pravin-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-storage
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: nginx-storage
+          persistentVolumeClaim:
+            claimName: nginx-pvc
+
+            ===================================
+
+
+            service 
+
+
+apiVersion: v1
+kind: service
+metadata:
+  name: nginx-service
+spec:
+  type: NodePort
+  selector: 
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080
+
+
+      Note: nodePort must be between 30000 and 32767 unless your cluster is configured differently.
+
+      port: 80 → The Service listens on port 80.
+targetPort: 80 → Forwards traffic to port 80 inside the container.
+nodePort: 30080 → The port you access from outside the cluster.
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+Shell Script
+Print 5 system checks:
+CPU
+Memory
+Disk
+IP
+Top process
+
+
+echo "1. CPU Usage"
+top -bn1 | grep "Cpu(s)"
+echo
+
+echo "2. Memory Usage"
+free -h
+echo
+
+echo "3. Disk Usage"
+df -h
+echo
+
+echo "4. IP Address"
+hostname -I
+echo
+
+echo "5. Top Process (Highest CPU Usage)"
+ps -eo pid,comm,%cpu --sort=-%cpu | head -n 6
+
+
+............................................................
+
+-e means show every process running on the system.
+-o means output format.
+The minus sign (-) means descending order (highest first).
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Jenkins Pipeline
+You will learn to combine all tasks into a realistic Jenkins Pipeline with proper stages and tags.
+
+Create Declarative Pipeline with stages:
+
+Infrastructure – apply Terraform to create EC2, Security Group, Key Pair, and EBS volume
+
+App Deployment – run Ansible playbooks and deploy Kubernetes resources
+
+Monitoring Checks – execute shell scripts to check:
+
+CPU
+
+Memory
+
+Disk
+
+IP
+
+Top process
+
+Use environment variables for all stages:
+
+INSTITUTE_NAME = "Pathnex"
+
+TEAM = "DevOps"
+
+ENV = "prod"
+
+PROJECT = "Pathnex-Training"
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\
+
+pipeline {
+    agent any
+     
+     envionment  {
+        INSTITUTE_NAME = "pRAVIN0"
+        TEAM = "Devops"
+        ENV = "prod"
+        PROJECT = "Pravin-Training"
+     }
+
+     stages{
+        stage('infrasructure') {
+            steps {
+                echo "Institute  : ${INSTITUTE_NAME} "
+                echo "TEAM       : ${TEAM} "
+                echo "ENV        : ${ENV} "
+                echo "PROJECT    : ${PROJECT} "
+
+                dir('terraform') {
+                    sh 'terraform init'
+                    sh 'terraform validate'
+                    sh 'terraform plan'
+                    sh 'terraform apply --auto-approve'
+                }
+            }
+        }
+
+        stage('App Deployment'){
+            steps {
+                dir('ansible'){
+                    sh 'ansible-playbook -i inventory deploy.yaml'
+                }
+
+                dir('Kubernetes'){
+                    sh 'kubectl apply -f pvc.yaml'
+                    sh 'kubectl apply -f deployment.yaml'
+                    sh 'kubectl apply -f service.yaml'
+                }
+
+            }
+
+        }
+
+        stage ('Monitoring Check'){
+            steps {
+                dir ('scripts') {
+                    sh 'chmod +x system_check.sh'
+                    sh './system_check.sh'
+                }
+            }
+        }
+     }
+
+     post {
+        always {
+            echo "Pipeline finished"
+        }
+        success {
+            echo "Pipeline sucecssful"
+        }
+        failure {
+            echo "Pipeline Fail"
+        }
+     }
+}
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
+
+6️⃣ GitLab CI
+You will learn to combine all tasks in a realistic GitLab CI pipeline.
+
+Create .gitlab-ci.yml with stages:
+
+infrastructure – Terraform apply for EC2, SG, Key Pair, EBS
+
+app_deployment – Ansible and Kubernetes deployment
+
+monitoring_checks – Shell scripts to check:
+
+CPU
+
+Memory
+
+Disk
+
+IP
+
+Top process
+
+Define variables:
+
+INSTITUTE_NAME = "Pathnex"
+
+TEAM = "DevOps"
+
+ENV = "prod"
+
+PROJECT = "Pathnex-Training"
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
+
+
+stages:
+  - infrastructure
+  - app-deployment
+  - monitoring_checks
+
+varibles:
+  INSTITUTE_NAME: "pRAVIN"
+  ENV           :  "prod"
+  TEAM          : "Devops"
+  PROJECT       : "Pravin Training"
+
+before_script:
+  - echo "Institute = $INSTITUTE_NAME"
+  - echo "Team = $TEAM"
+  - echo "Environment = $ENV"
+  - echo "Project = $PROJECT"
+
+
+infrastructure:
+  stage: infrastructure
+  image: hashicorp/terraform:latest
+  script:
+    - cd terraform
+    - terraform init
+    - terraform validate
+    - terraform plan
+    - terraform apply --auto-approve
+  only:
+    - main
+
+app_deployment:
+  stage: app_deployment
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache ansible kubectl bash curl
+  script:
+    - cd ansible
+    - ansible-playbook -i inventory deploy.yml
+
+    - cd ../kubernetes
+    - kubectl apply -f pvc.yaml
+    - kubectl apply -f deployment.yaml
+    - kubectl apply -f service.yaml
+  only:
+    - main
+
+
+monitoring_checks:
+  stage: monitoring_checks
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache bash procps util-linux
+  script:
+    - chmod +x scripts/system_check.sh
+    - ./scripts/system_check.sh
+  only:
+    - main
+
+
+
+
+
+
+
+
+
+
+
+  ###  🔹 --no-cache
+
+This tells Alpine:
+
+Don’t store downloaded package index files
+
+
+
+
+
+
+
