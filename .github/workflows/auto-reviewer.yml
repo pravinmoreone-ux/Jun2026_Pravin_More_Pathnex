@@ -10,7 +10,7 @@ on:
 # PR is newly created (opened) or when a draft PR is officially marked as ready_for_review. It won't trigger on every single code push.
 
 jobs:
-  add-reviewer:
+  add-reviewer: 
     runs-on: ubuntu-latest
 
 # runs-on: ubuntu-latest: Defines the virtual environment. GitHub will spin up a fresh, 
