@@ -266,3 +266,4 @@ USER appuser
 
 CMD ["/opt/pathnex/scripts/start.sh"]
 
+# stash ckeck
