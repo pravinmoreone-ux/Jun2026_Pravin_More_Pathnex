@@ -173,6 +173,25 @@ build:
     - echo "Using secret $API_KEY for $INSTITUTE_NAME"
 
 
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>...
 
 
+
+import boto3
+
+def lambda_handler(event, context):
+  
+  ec2 = boot3.client("ec2",region_name="ap-south-1")
+
+  response = ec2.describe_instance()
+
+  for reservation in response["Reservations"]:
+    for instance in reservation["Instances"]:
+
+      instance_id = instance["InstanceId"]
+      instance_type = instance["InstanceType"]
+      state = instance["State"]["Name"]
+
+
+      
 
