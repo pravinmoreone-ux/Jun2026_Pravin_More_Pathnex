@@ -193,5 +193,13 @@ def lambda_handler(event, context):
       state = instance["State"]["Name"]
 
 
-      
+      print(f"Instance ID: {instance_id}")
+            print(f"Instance Type: {instance_type}")
+            print(f"Status: {state}")
+            print("--------------------------")
+
+    return {
+        "statusCode": 200,
+        "body": "EC2 inventory completed"
+    }
 
