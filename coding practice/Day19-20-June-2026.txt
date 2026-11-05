@@ -1,25 +1,22 @@
 # Day 19 — Git Deploy, RDS Skeleton, Rolling Strategy, Ping Check
 
-##  Ansible — Deploy App Using Git by Pravin More
+## 🔹 Ansible — Deploy App Using Git
 
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-- name: Deploy App using Git
-  hosts: all         ### Runs this playbook on all servers defined in the Ansible inventory file.
+---
+- name: Deploy app from Git for Pathnex
+  hosts: all
   become: yes
-  
+
   tasks:
     - name: Install git
       yum:
         name: git
-        status: present
-  
+        state: present
+
     - name: Clone repository
       git:
-        repo: https://github.com/pravin/java-app.git
-        dest: "/opt/pravin-app"
-
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        repo: "https://github.com/pathnex/app.git"
+        dest: "/opt/pathnex-app"
 
 
 ## 🔹 Terraform — RDS Skeleton (MySQL)
@@ -29,14 +26,9 @@ resource "aws_db_instance" "PathnexRDS" {
   engine                 = "mysql"
   instance_class         = "db.t3.micro"
   username               = "admin"
-  password               = "Pravin123"
+  password               = "Pathnex123"
   skip_final_snapshot    = true
 }
-
-
-
-
-=================================================================
 
 
 ## 🔹 Kubernetes — Deployment Rolling Update (Detailed)
@@ -44,17 +36,17 @@ resource "aws_db_instance" "PathnexRDS" {
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pravin-rollout
+  name: pathnex-rollout
 spec:
   replicas: 3
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 2
-      maxUnavailble: 1
-    selector:
-      matchLabels:
-        app: rollout
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: rollout
   template:
     metadata:
       labels:
@@ -64,16 +56,12 @@ spec:
         - name: app
           image: nginx
 
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-
-Shell Script — Check Internet Connectivity
+## 🔹 Shell Script — Check Internet Connectivity
 
 #!/bin/bash
 
-ping -c 2 google.com &> /dev/null               #This line checks internet connectivity.
-
-###  $? Stores the exit status of previous command.
+ping -c 2 google.com &> /dev/null
 
 if [ $? -eq 0 ]; then
   echo "Internet is available"
@@ -82,40 +70,34 @@ else
 fi
 
 
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Approvals
 
-Jenkins Pipeline — Manual Approval
+## 🔹 Jenkins Pipeline — Manual Approval
 You will learn how to **pause pipeline until manual approval**.
-
 
 pipeline {
     agent any
     environment {
-        INSTITUTE_NAME = "PRAVIN"
+        INSTITUTE_NAME = "Pathnex"
     }
     stages {
-        stage('Deploy'){
-            steps{
-                input message: "Approve Deployment for $INSTITUTE_NAME?"
-                sh 'echo "Deployment approve and executed!"'
+        stage('Deploy') {
+            steps {
+                input message: "Approve deployment for $INSTITUTE_NAME?"
+                sh 'echo "Deployment approved and executed!"'
             }
         }
     }
 }
 
-
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-
-GitLab CI — Manual Approval Job
+## 🔹 GitLab CI — Manual Approval Job
 You will learn how to **use manual jobs in GitLab CI for approvals**.
 
 stages:
   - deploy
 
 variables:
-  INSTITUTE_NAME: "Pravin"
+  INSTITUTE_NAME: "Pathnex"
 
 deploy:
   stage: deploy
@@ -123,26 +105,3 @@ deploy:
   script:
     - echo "Ready to deploy $INSTITUTE_NAME"
   when: manual
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
